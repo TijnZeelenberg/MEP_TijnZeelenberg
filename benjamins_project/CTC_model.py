@@ -126,21 +126,21 @@ for i in range(ncoll):
     V2 = np.array([-vtr, 0, 0])  # Particle 2 moves in the negative x direction
 
     # Preallocation data arrays
-    Ekin1 = np.zeros((1, round(nsteps)))
-    Ekin2 = np.zeros((1, round(nsteps)))
-    Erot1 = np.zeros((1, round(nsteps)))
-    Erot2 = np.zeros((1, round(nsteps)))
-    Elj13 = np.zeros((1, round(nsteps)))
-    Elj14 = np.zeros((1, round(nsteps)))
-    Elj23 = np.zeros((1, round(nsteps)))
-    Elj24 = np.zeros((1, round(nsteps)))
-    dr12v = np.zeros((1, round(nsteps)))
-    dr13v = np.zeros((1, round(nsteps)))
-    dr14v = np.zeros((1, round(nsteps)))
-    dr23v = np.zeros((1, round(nsteps)))
-    dr24v = np.zeros((1, round(nsteps)))
-    dr34v = np.zeros((1, round(nsteps)))
-    drABv = np.zeros((1, round(nsteps)))
+    Ekin1 = np.zeros(round(nsteps))
+    Ekin2 = np.zeros(round(nsteps))
+    Erot1 = np.zeros(round(nsteps))
+    Erot2 = np.zeros(round(nsteps))
+    # lj13 = np.zeros(round(nsteps))
+    # lj14 = np.zeros(round(nsteps))
+    # lj23 = np.zeros(round(nsteps))
+    # lj24 = np.zeros(round(nsteps))
+    # dr12v = np.zeros(round(nsteps))
+    # dr13v = np.zeros(round(nsteps))
+    # dr14v = np.zeros(round(nsteps))
+    # dr23v = np.zeros(round(nsteps))
+    # dr24v = np.zeros(round(nsteps))
+    # dr34v = np.zeros(round(nsteps))
+    drABv = np.zeros(round(nsteps))
 
     dr = 0
     step = 0
@@ -157,5 +157,34 @@ for i in range(ncoll):
         Erot1[step] = 0.5 * I * (omega_1[0] ** 2 + omega_1[1] ** 2)
         Erot1[step] = 0.5 * I * (omega_2[0] ** 2 + omega_2[1] ** 2)
 
+        # Computing Intra-atomic distances
+        # dr13 = norm(X11 - X21)
+        # dr14 = norm(X11 - X22)
+        # dr23 = norm(X12 - X21)
+        # dr24 = norm(X12 - X22)
+        #
+        # dr13v = dr13
+        # dr14v = dr14
+        # dr23v = dr23
+        # dr24v = dr24
+        #
+        # # Computing interatomic lennard-jones potentials
+        # lj13[step] = lennartjones_potential(float(dr13), sigma_LJ, kB)
+        # lj14[step] = lennartjones_potential(float(dr14), sigma_LJ, kB)
+        # lj23[step] = lennartjones_potential(float(dr23), sigma_LJ, kB)
+        # lj24[step] = lennartjones_potential(float(dr24), sigma_LJ, kB)
+        #
+        # # Computing interatomic distances for molecules 1 and 2
+        # dr12v[step] = norm(X11 - X12)
+        # dr34v[step] = norm(X21 - X22)
+
+        F13tr = intraatomic_force(X11, X21, sigma_LJ, kB)
+        F14tr = intraatomic_force(X11, X22, sigma_LJ, kB)
+        F23tr = intraatomic_force(X12, X21, sigma_LJ, kB)
+        F24tr = intraatomic_force(X12, X22, sigma_LJ, kB)
+
+        # Total force on each molecule
+        F1 = F13tr + F14tr + F23tr + F24tr
+        F2 = -F1
 
 print("--- %s seconds ---", (time.time() - start_time))
