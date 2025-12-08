@@ -178,6 +178,7 @@ for i in range(ncoll):
         # dr12v[step] = norm(X11 - X12)
         # dr34v[step] = norm(X21 - X22)
 
+        # Compute interaction forces between atoms of different molecules
         F13tr = intraatomic_force(X11, X21, sigma_LJ, kB)
         F14tr = intraatomic_force(X11, X22, sigma_LJ, kB)
         F23tr = intraatomic_force(X12, X21, sigma_LJ, kB)
@@ -187,4 +188,43 @@ for i in range(ncoll):
         F1 = F13tr + F14tr + F23tr + F24tr
         F2 = -F1
 
-print("--- %s seconds ---", (time.time() - start_time))
+        # Compute momenta in the body-fixed frames using the forces in inertial frame
+        # and the orientations of the molecules.
+        # Momenta are computed at timestep t.
+        M1, M2 = get_moments(F13tr, F14tr, F23tr, F24tr, R1, R2, d_H2)
+
+        # Update velocities and angular velocities using Verlet algorithm
+        # Compute half-step velocities
+        v1_half = V1 + (F1 / m1) * (0.5 * dt)
+        v2_half = V2 + (F2 / m2) * (0.5 * dt)
+        omega_1_half = omega_1 + (M1 / I) * (0.5 * dt)
+        omega_2_half = omega_2 + (M2 / I) * (0.5 * dt)
+        R1_half = R1 + get_rdot(omega_1, R1) * (0.5 * dt)
+        R2_half = R2 + get_rdot(omega_2, R2) * (0.5 * dt)
+
+        # Update positions at timestep (t+dt)
+        X1 = X1 + v1_half * dt
+        X2 = X2 + v2_half * dt
+        # Update orientations at timestep (t+dt)
+        R1 = R1 + get_rdot(omega_1_half, R1_half) * dt
+        R2 = R2 + get_rdot(omega_2_half, R2_half) * dt
+
+        # Update atomic positions at timestep (t+dt) using Center of Mass and rotation matrices
+        Xv11 = R1 @ np.transpose(X11_0)
+        Xv12 = R1 @ np.transpose(X12_0)
+        Xv21 = R2 @ np.transpose(X21_0)
+        Xv22 = R2 @ np.transpose(X22_0)
+
+        X11 = X1 + np.transpose(Xv11)
+        X12 = X1 + np.transpose(Xv12)
+        X21 = X2 + np.transpose(Xv21)
+        X22 = X2 + np.transpose(Xv22)
+
+        # Compute half-step forces
+        F13trhalf = intraatomic_force(X11, X21, sigma_LJ, kB)
+        F14trhalf = intraatomic_force(X11, X22, sigma_LJ, kB)
+        F23trhalf = intraatomic_force(X12, X21, sigma_LJ, kB)
+        F24trhalf = intraatomic_force(X12, X22, sigma_LJ, kB)
+        F1_half = F13trhalf + F14trhalf + F23trhalf + F24trhalf
+        F2_half = -F1_half
+        print("--- %s seconds ---", (time.time() - start_time))
